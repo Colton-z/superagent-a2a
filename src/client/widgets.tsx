@@ -94,6 +94,18 @@ export function SessionButton({ sessionId, label,
   return <Button variant={variant} size="sm" icon={<Icon name="session" size={14} />}
     onClick={() => { openSession(sessionId).catch(error => notify(errorText(error))) }}>{label ?? t('openSession')}</Button>
 }
+/**
+ * Opens the page that shows a Ticket's conversation on the agent's host. The page is the host's own path, so a panel that
+ * host embeds asks it to open the page (`dsh-superagent.open-conversation`); a panel on its own opens it in a new tab.
+ */
+export function ConversationButton({ page, variant = 'ghost' }: { page: string; variant?: 'ghost' | 'outline' }) {
+  const { t } = usePanel()
+  return <Button variant={variant} size="sm" icon={<Icon name="session" size={14} />}
+    onClick={() => {
+      if (window.parent !== window) window.parent.postMessage({ type: 'dsh-superagent.open-conversation', page }, '*')
+      else window.open(page, '_blank', 'noopener')
+    }}>{t('openConversation')}</Button>
+}
 export function ExternalLink({ href, children, icon = 'external' }: { href: string; children: ReactNode; icon?: IconName }) {
   return <a className="dt-inline-link dt-icon-link" href={href} {...external}><Icon name={icon} size={13} />{children}</a>
 }

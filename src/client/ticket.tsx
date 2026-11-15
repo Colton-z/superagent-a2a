@@ -7,8 +7,8 @@ import { usePanel } from './provider.tsx'
 import { settingsRoute } from './route.ts'
 import { Earlier, ThreadLine, automatedRuns } from './rows.tsx'
 import { actorName, localized, readableMarkers, reasonLabel, valueLabel, when } from './text.ts'
-import { ActionLink, ConfirmButton, ExternalLink, Hint, KeyValues, LabelValue, LoadState, MarkdownLite, PageHead, Section, SessionButton,
-  StageMark, When } from './widgets.tsx'
+import { ActionLink, ConfirmButton, ConversationButton, ExternalLink, Hint, KeyValues, LabelValue, LoadState, MarkdownLite, PageHead, Section,
+  SessionButton, StageMark, When } from './widgets.tsx'
 
 type Input = TicketPageView['inputs'][number]
 function InputLine({ input, earlier = [] }: { input: Input; earlier?: { id: string; at: string; preview: string }[] }) {
@@ -132,6 +132,7 @@ export function TicketPage({ id }: { id: string }) {
         message={t('retryConfirm', { title: data.title })}
         onConfirm={() => after(call('POST tickets/:id/retry', { id }))} />}
       {data.sessionId && <SessionButton variant="outline" sessionId={data.sessionId} />}
+      {data.conversationPage && <ConversationButton variant="outline" page={data.conversationPage} />}
     </PageHead>
     {error && <LoadState error={error} loading={false} />}
     <div className="dt-row-meta dt-status-line">

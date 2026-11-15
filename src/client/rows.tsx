@@ -5,7 +5,7 @@ import { Icon, Tag } from './controls.tsx'
 import { decisionMark, threadMark, ticketMark } from './marks.ts'
 import { usePanel } from './provider.tsx'
 import { actorName, localized, readableMarkers, reasonLabel, valueLabel } from './text.ts'
-import { ActionLink, ConfirmButton, LabelValue, SessionButton, StageMark, When } from './widgets.tsx'
+import { ActionLink, ConfirmButton, ConversationButton, LabelValue, SessionButton, StageMark, When } from './widgets.tsx'
 
 export function TicketLine({ ticket, question, onChanged, context }: {
   ticket: TicketRow; question?: boolean; onChanged?: () => Promise<void>; context?: boolean
@@ -35,6 +35,7 @@ export function TicketLine({ ticket, question, onChanged, context }: {
           message={t('retryConfirm', { title: ticket.title })}
           onConfirm={() => after(call('POST tickets/:id/retry', { id: ticket.id }))} />}
         {ticket.actions.retry && ticket.sessionId && <SessionButton variant="outline" sessionId={ticket.sessionId} />}
+        {ticket.actions.retry && ticket.conversationPage && <ConversationButton variant="outline" page={ticket.conversationPage} />}
         {ticket.actions.stop && <ConfirmButton variant="outline" icon="stop" label={t('stop')} title={t('stopConfirmTitle')}
           message={t('stopConfirm', { title: ticket.title })}
           onConfirm={() => after(call('POST tickets/:id/stop', { id: ticket.id }))} />}

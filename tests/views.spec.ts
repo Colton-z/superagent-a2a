@@ -55,7 +55,7 @@ function views() {
     rules: [{ id: 'copy', name: 'Copy fixes', enabled: true, instruction: 'Fix copy' }] } }))
   const sources = new SourceRegistry(() => store.settings())
   sources.register(feishuKind); sources.register(githubKind)
-  return { store, sources, links }
+  return { store, sources, links, conversation: () => undefined }
 }
 const at = new Date().toISOString()
 /** A live ticket with no Assignment, as a follow-up's owner needs one. */
@@ -122,12 +122,12 @@ it('follows the Ticket\'s stage: a blocked Ticket a person answered since is wor
       report: blocked }],
     inputs: [] as { id: string; kind: 'trigger'; triggerId: string; at: string; human?: true }[] }
   store.tickets.save(ticket)
-  const row = ticketSummary(store.tickets.get('t1')!)
+  const row = ticketSummary(store.tickets.get('t1')!, undefined)
   expect(row).toMatchObject({ stage: 'person', action: 'blocked', actions: { retry: true }, note: { text: 'Needs the design file',
     error: false } })
   expect(ticketDetail(host, 't1')!.assignments[0]).toMatchObject({ turnEndedAt: blocked.at })
   store.tickets.save({ ...ticket, inputs: [{ id: 'i1', kind: 'trigger', triggerId: 'e2', at: '2026-09-22T00:02:00Z', human: true }] })
-  const answered = ticketSummary(store.tickets.get('t1')!)
+  const answered = ticketSummary(store.tickets.get('t1')!, undefined)
   expect(answered).toMatchObject({ stage: 'working', actions: { retry: false } })
   expect(answered).not.toHaveProperty('note')
   expect(ticketDetail(host, 't1')!.assignments[0]).not.toHaveProperty('turnEndedAt')
@@ -224,7 +224,7 @@ it('names a listed bot as the Policy lists it, and gives a bot\'s Mandate a basi
   store.saveSettings(SettingsSchema.parse({ policy: { sources: { feishu: { allowed: [], bots: [{ id: 'cli_review', name: '评审机器人' }] } } } }))
   const sources = new SourceRegistry(() => store.settings())
   sources.register(feishuKind)
-  const view = snapshot({ store, sources, links })
+  const view = snapshot({ store, sources, links, conversation: () => undefined })
   expect(view.actor({ source: 'feishu', id: 'cli_review' }, false).name).toEqual({ zh: '评审机器人', en: '评审机器人' })
   expect(basisFacts({ via: 'bot', sender: '评审机器人', addressed: 'mention', observation: { mode: 'auto' } }, view.rule).facts)
     .toEqual([{ name: 'sender', value: '评审机器人' }, { name: 'bot' }, { name: 'addressed', value: 'mention' }, { name: 'mode', value: 'auto' }])

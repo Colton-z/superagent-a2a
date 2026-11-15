@@ -1,5 +1,4 @@
 /** Serves paginated context resources to orchestrator_read so large bodies stay out of model prompts until requested. */
-import type { SessionId } from '@deepseek-ai/dsh-session'
 import { UserError, key, latestReport, reached, runningAssignment, threadKey, type Ticket, type Trigger } from '../core/index.ts'
 import { batchOf, inputMessage, triggerMessage, workerSessionId } from '../executor/dsh.ts'
 import { readGithub } from '../sources/github-read.ts'
@@ -9,7 +8,7 @@ import { feishuTriggerId } from '../sources/feishu-trigger.ts'
 import { ASSIGNMENTS, INPUTS, assignmentLine, decisionCard, decisionDetails, inputLine, newestPage, preview, textPage, threadCard, ticketCard,
   ticketDetails, triggerCard, type TicketThread } from './cards.ts'
 import { threadTitle } from './views/records.ts'
-import { transcriptEntry } from './context.ts'
+import type { TranscriptEntry } from './context.ts'
 import { builtInParts, defaultPrompts } from './prompts.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type { Commands } from '../infra/commands.ts'
@@ -22,6 +21,7 @@ import type { TextCache } from './cache.ts'
 
 /** Resource descriptors exposed via orchestrator_read, marking which resources worker sessions may also read for their own ticket. */
 export const RESOURCES: readonly { name: string; holds: string; executor?: true }[] = [
+  { name: 'agents', holds: 'the agents a ticket can go to, where tickets go to agents: each agent_id, name and description' },
   { name: 'tickets', holds: 'ticket cards, newest first; a card\'s state is person/review after a ready report, person/blocked or person/failed after those reports, person/answer with a question, person/delivery when an input could not reach the worker, working or working/queued while it works, idle once the worker ended its turn without a report, else how the ticket ended' },
   { name: 'triggers', holds: 'trigger cards with where each went, newest first' },
   { name: 'threads', holds: 'subscribed threads, newest activity first, with their labels, tickets, current assessment and polling errors' },
@@ -68,6 +68,10 @@ export interface ResourceHost {
   mayRead(sessionId: string, revision: number): boolean
   feishuPageSize(): number
   sourceLink(trigger: Trigger, signal?: AbortSignal): Promise<{ source_url?: string; source_url_read?: string }>
+  /** The agents tickets go to, when the A2A executor works them. */
+  agents?(): Promise<{ agent_id: string; name: string; description: string }[]>
+  /** The conversation that works a Ticket, oldest message first, as its executor keeps it. */
+  transcript(ticketId: string, signal?: AbortSignal): Promise<TranscriptEntry[]>
 }
 export interface MainResourceHost extends ResourceHost {
   readonly sessions: Pick<Sessions, 'status' | 'modelRetry'>
@@ -111,9 +115,6 @@ async function sourcePage(read: Read, source: string, fetch: () => Promise<unkno
 const THREAD_DECISIONS = 5
 const triggerLine = (trigger: Trigger) => ({ trigger_id: trigger.id, actor: trigger.actor.id, human: trigger.human, at: trigger.at,
   preview: preview(trigger.text), chars: trigger.text.length, read: `trigger/${trigger.id}` })
-async function transcript(host: ResourceHost, ticketId: string) {
-  return (await host.context.sessionController.inspect(workerSessionId(ticketId) as SessionId)).events
-}
 
 const ROUTES: readonly Route[] = [
   ['tickets', read => {
@@ -194,6 +195,11 @@ const ROUTES: readonly Route[] = [
     return { default: catalog.default, roles, failures: catalog.failures,
       providers: catalog.groups.map(group => ({ id: group.id, name: group.name, count: group.models.length, read: `models/${group.id}` })) }
   }],
+  ['agents', async read => {
+    if (read.rest || !read.host.agents) throw new Error('This installation does not send tickets to agents')
+    const agents = (await read.host.agents()).map(({ agent_id, name, description }) => ({ agent_id, name, description }))
+    return list(read, (offset, count) => agents.slice(offset, offset + count))
+  }],
   ['models/', async read => {
     const models = (await main(read).context.sessionController.modelCatalog()).groups.find(group => group.id === read.rest)?.models
     if (!models) throw new Error('Unknown model provider')
@@ -269,8 +275,7 @@ const ROUTES: readonly Route[] = [
       if (message === undefined) throw new Error('Unknown ticket input')
       body = message
     } else if (section === 'message' && part && /^\d+$/.test(part)) {
-      const event = (await transcript(host, id))[Number(part)]
-      const entry = event && transcriptEntry(event)
+      const entry = (await host.transcript(id, signal))[Number(part)]
       if (!entry) throw new Error('Unknown transcript entry')
       body = JSON.stringify(entry)
     } else if (section === 'report' && part) {
@@ -281,11 +286,10 @@ const ROUTES: readonly Route[] = [
     else if (section === 'assignment') body = ticket.execution?.assignment ?? ''
     else if (section === 'result') body = latestReport(ticket)?.summary ?? ''
     else if (section === 'transcript') {
-      body = (await transcript(host, id)).flatMap((event, index) => {
-        const entry = transcriptEntry(event)
-        const said = entry?.message.content.map(block => block.type === 'text' ? block.text : `[${block.type}]`).join(' ') ?? ''
-        return entry ? [{ type: entry.type, preview: preview(said).slice(0, 80), chars: JSON.stringify(entry).length,
-          read: `ticket/${id}/message/${index}` }] : []
+      body = (await host.transcript(id, signal)).map((entry, index) => {
+        const said = entry.message.content.map(block => block.type === 'text' ? block.text : `[${block.type}]`).join(' ')
+        return { type: entry.type, preview: preview(said).slice(0, 80), chars: JSON.stringify(entry).length,
+          read: `ticket/${id}/message/${index}` }
       }).reverse().map(event => JSON.stringify(event)).join('\n')
     } else throw new Error('Unknown context resource')
     return text(read, body)

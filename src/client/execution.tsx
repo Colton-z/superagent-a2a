@@ -74,7 +74,9 @@ function EnvironmentVariables({ groups, sources,
 }
 export function ExecutionSettings() {
   const { t } = usePanel()
-  const { blocks, environment, sources } = useSettings().settings
+  const { blocks, environment, sources, executorKind } = useSettings().settings
+  // Agents over A2A work the Tickets with their own model, workspace and rules; these fields govern only DSH workers.
+  const dsh = executorKind === 'dsh'
   // Keep raw user text (such as separators between blocked commands) in the draft and parse only on save.
   const executor = blocks.executor.value
   const saved = { ...executor, maxWorkers: String(executor.maxWorkers), blockedCommands: executor.blockedCommands.join(' ') }
@@ -94,8 +96,8 @@ export function ExecutionSettings() {
       <Fields disabled={draft.busy}>
         <div className="dt-form dt-block">
           <h2 className="dt-block-title">{t('term.executor')}<InfoTip text={t('executorIntro')} /></h2>
-          <Section title={t('executorModel')} hint={t('executorModelHint')}><ModelField id="dt-worker-model" value={value.model}
-            onChange={model => edit({ model })} /></Section>
+          {dsh && <Section title={t('executorModel')} hint={t('executorModelHint')}><ModelField id="dt-worker-model" value={value.model}
+            onChange={model => edit({ model })} /></Section>}
           <Field label={t('maxWorkers')} hint={t('maxWorkersHint')}>
             <Input type="number" min={LIMITS.maxWorkers.min} max={LIMITS.maxWorkers.max} required value={value.maxWorkers}
               onChange={event => edit({ maxWorkers: event.target.value })} />
@@ -103,21 +105,21 @@ export function ExecutionSettings() {
         </div>
         <div className="dt-form dt-block">
           <h2 className="dt-block-title">{t('term.environment')}<InfoTip text={t('environmentIntro')} /></h2>
-          <Field label={t('executionDirectory')} hint={t('executionDirectoryHint')} note={value.directory ? undefined
+          {dsh && <Field label={t('executionDirectory')} hint={t('executionDirectoryHint')} note={value.directory ? undefined
             : t('executionDirectoryDefault', { root: environment.root })}>
             <Input className="dt-mono" value={value.directory} placeholder={t('executionDirectoryEmpty')} spellCheck={false} pattern="/.*"
               onChange={event => edit({ directory: event.target.value })} />
-          </Field>
+          </Field>}
           <Field label={t('prepareCommand')} hint={t('prepareCommandHint')}>
             <textarea ref={prepare} className="dt-textarea dt-mono" rows={3} maxLength={LIMITS.prepareCommand} spellCheck={false}
               placeholder={t('prepareCommandEmpty')} value={value.prepare}
               onChange={event => edit({ prepare: event.target.value })} />
           </Field>
           <EnvironmentVariables groups={environment.variables} sources={sources} onPick={insert} />
-          <Field label={t('blockedCommands')} hint={t('blockedCommandsHint')}>
+          {dsh && <Field label={t('blockedCommands')} hint={t('blockedCommandsHint')}>
             <Input className="dt-mono" value={value.blockedCommands} placeholder={t('blockedCommandsNone')} spellCheck={false}
               onChange={event => edit({ blockedCommands: event.target.value })} />
-          </Field>
+          </Field>}
         </div>
       </Fields>
       <SaveBar {...draft} onDiscard={draft.discard} />

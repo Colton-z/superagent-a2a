@@ -26,8 +26,10 @@ export const handoffPolicy = (role: 'orchestrator' | 'worker'): string => `${han
 export const autoMergeThreshold = (lines: number): string => `it changes fewer than ${lines} lines (additions plus deletions);`
 
 /** Retains message content while omitting streamed chunks, usage accounting, and reasoning blocks. */
-export function transcriptEntry(event: SessionEvent) {
+export function transcriptEntry(event: SessionEvent): TranscriptEntry | undefined {
   if (event.type !== 'user/message' && event.type !== 'tool/result' && event.type !== 'assistant/message') return undefined
   const message = event.type === 'user/message' ? event.data : event.data.message
   return { type: event.type, message: { role: message.role, content: message.content.filter(block => block.type !== 'reasoning') } }
 }
+/** One message of the conversation that works a Ticket, as the main Session reads it. */
+export interface TranscriptEntry { type: string; message: { role: string; content: ReadonlyArray<{ type: string; text?: string }> } }

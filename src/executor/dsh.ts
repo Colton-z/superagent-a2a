@@ -5,7 +5,7 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import { mkdir, rmdir, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { key, latestAssignment, latestReport, liveTicket, runningAssignment, threadKey, waitsForPerson } from '../core/index.ts'
-import type { AssessmentOutcome, Assignment, EngineForExecutor, Execution, Executor, Mandate, PolicyEffect, Ticket, TicketInput, Trigger }
+import type { AssessmentOutcome, Assignment, ConversationLink, EngineForExecutor, Execution, Executor, Mandate, PolicyEffect, Ticket, TicketInput, Trigger }
   from '../core/index.ts'
 import type { Machine } from '../deployment.ts'
 import { runAsWorker, verifyDirectory } from '../infra/environment.ts'
@@ -16,6 +16,7 @@ import { executionRoot, type Variable } from '../app/execution-environment.ts'
 import type { Sessions } from '../app/sessions.ts'
 import { WorktreeNameSchema } from '../app/assessment.ts'
 import { resultRelay } from '../app/notices.ts'
+import { transcriptEntry, type TranscriptEntry } from '../app/context.ts'
 import type { HealthEntry } from '../infra/health.ts'
 import { cancelled, collectJob, killJobs, runningJobs, stopBackground, stopSubagents, until, untilQuiet } from './background.ts'
 
@@ -205,6 +206,7 @@ export class WorkerSlots {
  * Runtime, Engine, worker tools, and management routes use this class to prepare, launch, deliver to, stop, and resume ticket assignments.
  */
 export class DshExecutor implements Executor {
+  readonly kind = 'dsh' as const
   private readonly disposers: (() => void)[] = []
   private readonly slots: WorkerSlots
   /** Transient failure counts tried so far: keyed by `assignment.id` for worker turns and `launch:<assignment.id>` for launches. */
@@ -402,6 +404,15 @@ export class DshExecutor implements Executor {
   }
   /** Number of open tickets whose worker holds a worker slot: its turn runs, or its shell jobs or subagents still run after its turn ended. */
   activeCount(): number { return this.host.store.tickets.open().filter(ticket => this.running(ticket)).length }
+  /** A started Ticket is worked in its one worker Session, which this harness shows. */
+  conversation(ticket: Ticket): ConversationLink | undefined {
+    return ticket.assignments.some(item => item.startedAt) ? { session: workerSessionId(ticket.id) } : undefined
+  }
+  /** The worker Session's messages, oldest first. */
+  async transcript(ticketId: string): Promise<TranscriptEntry[]> {
+    return (await this.host.context.sessionController.inspect(workerSessionId(ticketId) as SessionId)).events
+      .flatMap(event => transcriptEntry(event) ?? [])
+  }
   /** Whether a ticket's worker holds a worker slot: its turn runs, or its shell jobs or subagents do after its turn ended. */
   private running(ticket: Ticket): boolean {
     if (!runningAssignment(ticket)) return false

@@ -352,6 +352,14 @@ Enable the plugin in a profile's `cordis.patch.yml` with `id: dsh-superagent-web
 
 Add its module and spec to the module and test tables in [007 Architecture](007-architecture.md). `tests/docs.spec.ts` checks that both indexes are complete.
 
+A Source can also live in its own package, a dsh plugin installed beside the bundle. It imports what the steps above
+take from the bundle's modules from `dsh-superagent/sources` instead: the `SourceKind` contract, `health`,
+`sourceContext`, `CliError`, `validItems`, the polling helpers (`pollThreads`, `cursorAt`, `pause`), `KV` for
+`KV.sources.labels`, `record` and `family` for its own cursor keys, and the core `key` and `threadKey`. Declare `dsh-superagent` as an optional peer dependency (`peerDependenciesMeta`), so the plugin runs on the
+installed bundle, pnpm fetches none from a registry, and `CliError` is the class its `Commands` throw.
+Package it as a Bundle whose own `cordis.patch.yml` inserts the plugin, and install it into the profile
+with `dsh plugin add`.
+
 ### 11. Tests
 
 Create `tests/webhook.spec.ts` using the pattern in `tests/sources.spec.ts`: a real Store in a temporary directory, a `SourceRegistry` with `HealthBoard`, an Engine with stand-in ports, and a `SourceContext` from `sourceContextOf`.

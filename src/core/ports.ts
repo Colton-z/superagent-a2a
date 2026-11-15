@@ -40,9 +40,12 @@ export interface Candidate {
 export type AssessmentOutcome =
   | { kind: 'ignore'; reason: string | Reason; audit?: Record<string, unknown> }
   | { kind: 'unavailable'; reason: string | Reason; audit?: Record<string, unknown> }
-  /** An accept: `rules` the assessment matched, `name` the ticket's requested short name, and `note` a routing note for its worker. */
+  /**
+   * An accept: `rules` the assessment matched, `name` the ticket's requested short name, `note` a routing note for its worker,
+   * and `agent` the agent that works it, which the A2A executor requires.
+   */
   | { kind: 'accept'; title: string; scope: string; reason: string | Reason; acknowledgement?: string; rules?: string[]; audit?: Record<string, unknown>;
-    name?: string; note?: string }
+    name?: string; note?: string; agent?: string }
   | { kind: 'stop'; ticketId: string; reason: string | Reason; audit?: Record<string, unknown> }
 
 /** Semantic judgement. `request` queues the assessment, idempotently per `evalId`; the outcome returns through `Engine.decide`. */
@@ -56,6 +59,9 @@ export interface Assessor {
  * Executes assignments; concurrency and workspace management are its own concern. The Engine calls it inside its
  * commands, so each method only queues work, which reports back through the Engine's callbacks.
  */
+/** Where a Ticket's work can be watched: a Session of this harness, or a page of the host that runs the agent. */
+export type ConversationLink = { session: string } | { page: string }
+
 export interface Executor {
   /** Queue a pending assignment for launch; reports back through `Engine.assignmentStarted` or a `failed` report. */
   start(ticket: Ticket, assignment: Assignment): void

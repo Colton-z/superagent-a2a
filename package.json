@@ -16,6 +16,10 @@
     "./client": "./lib/client.js",
     "./github-watch": "./lib/github-watch.js",
     "./feishu-watch": "./lib/feishu-watch.js",
+    "./sources": {
+      "types": "./lib/sources.d.ts",
+      "default": "./lib/sources.js"
+    },
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
@@ -56,6 +60,7 @@
   },
   "packageManager": "pnpm@11.7.0",
   "dependencies": {
+    "@a2a-js/sdk": "1.3.0",
     "proper-lockfile": "4.1.2",
     "zod": "4.4.3"
   },

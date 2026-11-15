@@ -18,9 +18,12 @@ function policyOf(sources: SourceRegistry, id: string, health: HealthMap) {
 }
 /**
  * Builds the settings view by block (`{ value, revision }`), per-Source configuration and restart-sensitive fields,
- * and execution environment details (`stateDir` provides the default ticket working directory root).
+ * and execution environment details (`stateDir` provides the default ticket working directory root). `executorKind` says
+ * who works the Tickets: DSH worker Sessions here (`dsh`), or agents over A2A (`a2a`), which have no worker model,
+ * execution directory or blocked commands of this harness.
  */
-export function settingsView(store: Store, sources: SourceRegistry, health: HealthMap, setup: SetupState, stateDir: string) {
+export function settingsView(store: Store, sources: SourceRegistry, health: HealthMap, setup: SetupState, stateDir: string,
+  executorKind: 'dsh' | 'a2a') {
   const settings = store.settings()
   const block = <V>(name: 'policy' | 'eval' | 'executor', value: V) => ({ value, revision: store.blockRevision(name) })
   return {
@@ -37,6 +40,7 @@ export function settingsView(store: Store, sources: SourceRegistry, health: Heal
         labels: store.get(KV.sources.labels(instance.id)) ?? {}, ...problem ? { problem } : {}, ...policyOf(sources, instance.id, health) }
     }),
     environment: { root: executionRoot(settings, stateDir), variables: declaredVariables(sources, settings) },
+    executorKind,
   }
 }
 export type SettingsView = ReturnType<typeof settingsView>

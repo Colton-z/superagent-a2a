@@ -72,7 +72,7 @@ superagent-a2a 是一个面向团队的主动式编码 agent，以 [DeepSeek Har
 
 ## 配合 AstraBox 使用
 
-[AstraBox](https://github.com/Colton-z/AstraBox) 是一个自托管的 agent 运行时，在沙箱里运行 Claude Code、Codex 等编码 agent，并把每个 agent 通过 A2A 暴露出来。它可以把这个 bundle 作为 Assistant 运行：AstraBox 在沙箱里启动 superagent，根据所有者的 Agent 生成 agents 文件，并在控制台里展示面板。之后每张 Ticket 都在其中某个 Agent 的沙箱对话里完成，Agent 可以通过上面的扩展报告结果。详见 AstraBox 文档中的 [Assistants that work from a panel](https://github.com/Colton-z/AstraBox/blob/feat/0.1.15-integration/docs/assistants.md#panel-runtimes)。
+[AstraBox](https://github.com/Colton-z/AstraBox) 是一个自托管的 agent 运行时，在沙箱里运行 Claude Code、Codex 等编码 agent，并把每个 agent 通过 A2A 暴露出来。它可以把这个 bundle 作为 Assistant 运行：AstraBox 在沙箱里启动 superagent，根据所有者的 Agent 生成 agents 文件，并在控制台里展示面板。之后每张 Ticket 都在其中某个 Agent 的沙箱对话里完成，Agent 可以通过上面的扩展报告结果。详见 AstraBox 文档中的 [Assistants that work from a panel](https://github.com/Colton-z/AstraBox/blob/main/docs/assistants.md#panel-runtimes)。
 
 ## 许可证
 

@@ -72,7 +72,7 @@ Read the numbered documents in order; each builds only on the ones before it.
 
 ## Using it with AstraBox
 
-[AstraBox](https://github.com/Colton-z/AstraBox) is a self-hosted agent runtime that runs Claude Code, Codex and other coding agents in sandboxes and exposes each one over A2A. It can run this bundle as an Assistant: AstraBox starts the superagent in a sandbox, writes the agents file from the owner's Agents, and shows the panel in its console. Each Ticket is then worked in a sandboxed conversation of one of those Agents, which can report its outcome through the extension above. See [Assistants that work from a panel](https://github.com/Colton-z/AstraBox/blob/feat/0.1.15-integration/docs/assistants.md#panel-runtimes) in the AstraBox documentation.
+[AstraBox](https://github.com/Colton-z/AstraBox) is a self-hosted agent runtime that runs Claude Code, Codex and other coding agents in sandboxes and exposes each one over A2A. It can run this bundle as an Assistant: AstraBox starts the superagent in a sandbox, writes the agents file from the owner's Agents, and shows the panel in its console. Each Ticket is then worked in a sandboxed conversation of one of those Agents, which can report its outcome through the extension above. See [Assistants that work from a panel](https://github.com/Colton-z/AstraBox/blob/main/docs/assistants.md#panel-runtimes) in the AstraBox documentation.
 
 ## License
 

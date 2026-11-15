@@ -160,7 +160,9 @@ export function inputMessage(input: TicketInput, trigger?: object): string | und
     ...input.context ? { context: true } : {} })
   if (input.kind === 'policy-changed') return policyMessage(input.effect)
   if (input.kind === 'resumed') return RESUMED
-  if (input.kind === 'note') return `Note from the orchestrator, for context only: ${input.text}`
+  if (input.kind === 'note') {
+    return `Note from the orchestrator, for context only${input.tickets?.length ? ` (from ticket ${input.tickets.join(', ')})` : ''}: ${input.text}`
+  }
   return input.kind === 'text' ? input.text : undefined
 }
 /**

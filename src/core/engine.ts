@@ -218,7 +218,9 @@ export class Engine {
    * A fact the main Session gives an open ticket's Executor: see `Tickets.note`.
    * @throws UserError when the ticket is unknown or has ended.
    */
-  note(ticketId: string, text: string): Ticket { return this.repo.atomic(() => this.tickets.note(ticketId, text)) }
+  note(ticketId: string, text: string, related?: readonly string[]): Ticket {
+    return this.repo.atomic(() => this.tickets.note(ticketId, text, related))
+  }
   /**
    * An Executor's hand-back of a message that reached its ticket but asks for more than it: see `Evals.handback`.
    * @returns whether it was queued for Eval: false while another ticket still decides it, and for one this ticket did not decide (see `Evals.handback`).

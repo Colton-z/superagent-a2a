@@ -253,8 +253,11 @@ export type TicketInput =
   /** A human's message on one of its Threads resumed the ended ticket under its unchanged Mandate. */
   | { id: string; kind: 'resumed'; triggerId: string; at: string }
   | { id: string; kind: 'text'; text: string; at: string }
-  /** A fact the main Session gave the ticket from other work: context, which asks for nothing and grants nothing. */
-  | { id: string; kind: 'note'; text: string; at: string }
+  /**
+   * A fact the main Session gave the ticket from other work: context, which asks for nothing and grants nothing; `tickets`
+   * are the tickets the fact comes from, when it names them.
+   */
+  | { id: string; kind: 'note'; text: string; at: string; tickets?: string[] }
 
 /**
  * How a Policy change bears on a ticket: the rules it was accepted under that changed, with their instruction now, or no

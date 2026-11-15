@@ -389,14 +389,17 @@ export class Tickets extends EnginePart {
     this.emit('assignment.ended', { ticketId: ticket.id, assignmentId: assignment.id, reason })
   }
   /**
-   * Give an open ticket's Executor a fact as a note Input, such as what another ticket found; it grants nothing (see `TicketInput`).
-   * @throws UserError when the ticket is unknown or has ended.
+   * Give an open ticket's Executor a fact as a note Input, such as what another ticket found, from the `related` tickets it
+   * names; it grants nothing (see `TicketInput`).
+   * @throws UserError when the ticket or a related ticket is unknown, or the ticket has ended.
    */
-  note(ticketId: string, text: string): Ticket {
+  note(ticketId: string, text: string, related: readonly string[] = []): Ticket {
     const ticket = this.require(ticketId)
     if (!liveTicket(ticket)) throw new UserError('ticketEnded')
+    const tickets = [...new Set(related)].filter(id => id !== ticketId)
+    for (const id of tickets) this.require(id)
     const at = this.now()
-    this.addInput(ticket, { id: key('input', ticketId, 'note', at, text), kind: 'note', text, at })
+    this.addInput(ticket, { id: key('input', ticketId, 'note', at, text), kind: 'note', text, at, ...tickets.length ? { tickets } : {} })
     return this.require(ticketId)
   }
   /**

@@ -182,9 +182,11 @@ export function mainTools(host: MainToolsHost, agent: Agent): Tool[] {
       schema: z.object({
         ticket_id: z.string(),
         text: z.string().trim().min(1).refine(text => wordCount(text) <= IM_WORDS, `At most ${IM_WORDS} words`),
+        related_ticket_ids: z.array(z.string()).max(10).optional().describe('The tickets the fact comes from; where tickets go to '
+          + 'agents, the worker\'s agent also receives what their agents last reported.'),
       }).strict(),
       execute: async args => {
-        host.engine.note(args.ticket_id, args.text)
+        host.engine.note(args.ticket_id, args.text, args.related_ticket_ids)
         return routed(host, { reason: 'Noted for the worker', ticketId: args.ticket_id })
       },
     }),
@@ -225,7 +227,7 @@ export function mainTools(host: MainToolsHost, agent: Agent): Tool[] {
     }),
     tool({
       name: 'orchestrator_reply',
-      description: `Send an answer to a human question, a ready result, or attention requiring human action, as the replies section says; the gate refuses anything else, such as progress. purpose=result needs a ticket in person/review after a ready report, a completed or merged one, or a dropped one whose matched rule asks for a closing message. IM limit: ${IM_WORDS} words.`,
+      description: `Send an answer to a human question, a ready result, or attention requiring human action, as the replies section says; the gate refuses anything else, such as progress. purpose=result needs a ticket in person/review after a ready report, a completed or merged one, or a dropped one whose matched rule asks for a closing message or whose agent declined a person's request, who is told why. IM limit: ${IM_WORDS} words.`,
       schema: z.object({
         trigger_id: z.string().optional().describe('The original human question, for an answer only.'),
         ticket_id: z.string().optional(),

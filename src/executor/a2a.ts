@@ -397,28 +397,32 @@ export class A2AExecutor implements Executor {
       this.settle(ticketId, task.id)
       if (!ticket || !liveTicket(ticket) || record?.stopped) return
       if (github) for (const pull of pulls) if (pull) claimPull(github, ticketId, pull)
+      // The task of a person's follow-up ends with the agent's answer to it, which only the main Session can deliver: its
+      // Report names that message, as a worker's reply_to_trigger_id does, so the main Session answers the person.
+      const input = task.input ? ticket.inputs.find(item => item.id === task.input) : undefined
+      const answers = input?.kind === 'trigger' && input.human ? { answers: input.triggerId } : {}
       if (state === TaskState.TASK_STATE_COMPLETED) {
-        this.report(ticketId, { state: 'ready', summary })
+        this.report(ticketId, { state: 'ready', summary, ...answers })
         this.host.engine.turnEnded(ticketId, task.assignment)
       } else if (state === TaskState.TASK_STATE_FAILED) this.report(ticketId, { state: 'failed', summary })
       else if (state === TaskState.TASK_STATE_REJECTED) {
         const reason = statusText(current) || 'The agent gave no reason.'
-        const input = task.input ? ticket.inputs.find(item => item.id === task.input) : undefined
         if (handedBack(current) && input?.kind === 'trigger') {
           // A follow-up the agent will not take is handed back as a worker hands one back: to a fresh assessment, with the
           // agent's reason, while the ticket keeps its work.
           this.host.engine.handback(ticketId, input.triggerId, reason)
           this.host.engine.turnEnded(ticketId, task.assignment)
         } else {
-          // The ticket's own request: a Trigger that started a ticket starts no other (Evals.decide), so it ends here.
+          // A decline, or a hand-back of the ticket's own request, which a fresh Eval could not route again: a Trigger that
+          // started a ticket starts no other (Evals.decide).
           const why = handedBack(current) ? 'The agent handed this request back for another agent or for splitting' : 'The agent declined this request'
-          this.report(ticketId, { state: 'dropped', summary: `${why}. ${reason}` })
+          this.report(ticketId, { state: 'dropped', summary: `${why}. ${reason}`, ...answers })
         }
       } else this.report(ticketId, { state: 'blocked', summary: `The agent's work was stopped outside this ticket. ${summary}` })
     })
   }
   private report(ticketId: string, report: { state: 'progress' | 'waiting' | 'ready' | 'blocked' | 'failed' | 'dropped'; summary: string;
-    question?: string | null }): void {
+    question?: string | null; answers?: string }): void {
     const updated = this.host.engine.report(ticketId, report)
     const relay = reportRelay(updated, report)
     if (relay) this.host.sessions.relay(relay.id, relay.text)

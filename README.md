@@ -1,5 +1,7 @@
 # superagent-a2a
 
+English | [简体中文](README.zh-CN.md)
+
 superagent-a2a is a proactive coding agent for a team, packaged as a bundle for [DeepSeek Harness](https://www.deepseek.com/en/harness/). It listens to where the team already asks for work: a GitHub repository, optionally Feishu, or a ticket service of your own. When someone allowed asks for work, it opens a Ticket, has an agent work on it, and answers in the original conversation, for example with a pull request. A web panel shows what needs a person.
 
 It is based on [dsh-superagent](https://github.com/deepseek-ai/dsh-superagent-prototype), the DeepSeek Harness team's research prototype, and keeps its way of working: **take as little human attention as possible, and give as much value as possible.** The agent acts only when asked or when a rule the team wrote allows it, and speaks only when someone must act or can use a result. [docs/000-philosophy.md](docs/000-philosophy.md) explains the principle and what it asks of the operator.

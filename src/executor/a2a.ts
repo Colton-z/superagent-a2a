@@ -139,6 +139,8 @@ export function assignmentMessage(ticket: Ticket, request: object | undefined, b
     'Reply, when you are done, with what you did. If you need a person to decide or tell you something, ask in your reply and stop: '
       + 'their answer arrives as your next message. Later messages here are follow-ups on the same request, such as replies on its '
       + 'thread or CI results.',
+    'You post nothing on the request\'s thread yourself: dsh-superagent answers the person from your report and reply, so give the '
+      + 'answer itself rather than saying you sent it.',
     'Before your final reply to this message and to each later one, report its outcome with your report_outcome tool: '
       + 'TASK_STATE_COMPLETED with what you did, or TASK_STATE_REJECTED with why you will not do it, with handback when it is for '
       + 'another agent or must be split, saying what should happen instead.'
